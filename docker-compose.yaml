@@ -1,0 +1,36 @@
+version: '2.1'
+services:
+    kafka:
+      image: landoop/fast-data-dev
+      hostname: kafka
+      environment:
+        ADV_HOST: "kafka"
+      ports: 
+        - 3031:3031
+        - 2181:2181
+        - 3030:3030
+        - 9092:9092
+        - 8081:8081
+        - 8082:8082
+        - 8083:8083
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:3030"]
+        interval: 20s
+        timeout: 5s
+        retries: 3
+    producer:      
+      image: producer
+      build: ./producer
+      depends_on:
+        kafka:
+          condition: service_healthy
+    consumer:      
+      image: consumer
+      build: ./consumer
+      links:
+      - "kafka:kafka" #allows spark notebook to discover kafka service by name "kafka"
+      depends_on:
+        kafka:
+          condition: service_healthy
+        producer:
+          condition: service_completed_successfully
